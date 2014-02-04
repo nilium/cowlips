@@ -1,0 +1,74 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH << "#{File.dirname(__FILE__)}/../lib"
+
+require 'cowlips'
+require 'cowlips/fold'
+
+require 'optparse'
+require 'awesome_print'
+require 'pp'
+
+
+include CL
+
+
+def read_cli_args(args)
+  args = Marshal.load(Marshal.dump(args))
+
+  opts = {
+    :'print-exprs' => false
+  }
+
+  OptionParser.with do
+    banner = 'Usage: cowlips [--print-exprs] [sources|-]'
+
+    on("-P", "--print-exprs", "Print parsed expressions and exit") do
+      opts[:'print-exprs'] = true
+    end
+  end.parse!(args)
+
+  opts[:input] = args
+
+  opts
+end
+
+
+def main
+  options = read_cli_args(ARGV)
+
+  expressions =
+    if options[:input].empty?
+      Parser[$stdin.read]
+    else
+      options[:input].map do |path|
+        path = path.lstrip
+        Parser[
+          case path
+          when '-' then $stdin.read
+          else File.open(path, 'r') { |io| io.read }
+          end
+        ]
+      end.flatten(1)
+    end
+
+  ap expressions
+
+  if options[:'print-exprs']
+    ap expressions
+
+    return
+  end
+
+  info "before folding"
+  puts expressions
+
+  expressions.map! { |exp| fold(exp) }
+
+  succ "done"
+  pp expressions
+  puts expressions
+end
+
+
+main
