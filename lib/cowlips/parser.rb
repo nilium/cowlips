@@ -8,31 +8,14 @@ module CL
 module Parser
   include Assertions
 
-  def stop_error(*args)
-    begin
-      yield
-    rescue StopIteration => ex
-      warn "StopIteration caught during stop_error"
-      raise *args
-    end
-  end
-
   # Given a stream of tokens, returns a quoted expressionf or that token stream.
   # The input token stream must start on a quote token.
   def quote(stream)
-    tok = stream.next
-    expect tok.kind == :quote, "Expected quote"
-    quoted = QuotedExpr.new(stop_error("Expecting quoted expression after quote at [#{tok.line}:#{tok.column}]") {
-      expr(stream)
-    })
-    # Implicit list expression
-    if quoted.inner.kind_of?(SExpr)
-      quoted.inner.unshift :list
-      quoted.inner
-    else
-      quoted.inner.parent = quoted if Expr === quoted.inner
-      quoted
-    end
+    tok = stop_error("Expected token input") { stream.next }
+    expect("Expected quote token, got #{tok.kind}") { tok.kind == :quote }
+    stop_error("Expecting quoted expression after quote at #{tok.pos}") {
+      QuotedExpr.new(expr(stream)).tap { |k| k.inner.parent = k if k.inner.kind_of? Expr }
+    }
   end
 
   # Given a stream of tokens, returns an expression for that token stream

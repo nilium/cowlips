@@ -42,22 +42,21 @@ class ClassDef < SExpr
     def [](expr)
       return nil unless expr.kind_of?(SExpr) && expr[0] == :'def-type'
 
-      expect expr.length >= 4, "def-type takes at least three arguments (name, fields, ctor)"
+      expect("def-type takes at least three arguments (name, fields, ctor)") {
+        expr.length >= 4
+      }
 
-      expect(
-        expr[1].kind_of?(Symbol),
-        "def-type's first argument must be a type name"
-      )
+      expect("def-type's first argument must be a type name") {
+        expr[1].kind_of?(Symbol)
+      }
 
-      expect(
-        expr[2].kind_of?(SExpr) && expr[2].all? { |k| k.kind_of?(Symbol) },
-        "def-type's second argument must be a list of names"
-        )
+      expect("def-type's second argument must be a list of names") {
+        expr[2].kind_of?(SExpr) && expr[2].all? { |k| k.kind_of?(Symbol) }
+      }
 
-      expect(
-        expr[3].kind_of?(SExpr),
-        "def-type's ctor argument must be an S-expr for the ctor body"
-        )
+      expect("def-type's ctor argument must be an S-expr for the ctor body") {
+        expr[3].kind_of?(SExpr)
+      }
 
       warn "folding class def"
 
@@ -67,16 +66,14 @@ class ClassDef < SExpr
         cx.methods   = expr.inner[4..-1]
 
         method_names = [cx.name, :"#{cx.name}?"] + cx.methods.map { |m| m[0] }
-        puts method_names
-        expect(
-          method_names.uniq!.nil?,
-          "All method names must be unique and not use the type's name"
-          )
 
-        expect(
-          cx.methods.all?(&NAME_FUNC_PAIR),
-          "All further arguments to def-type must be name-function pairs"
-          )
+        expect("All method names must be unique and not use the type's name") {
+          method_names.uniq!.nil?
+        }
+
+        expect("All further arguments to def-type must be name-function pairs") {
+          cx.methods.all?(&NAME_FUNC_PAIR)
+        }
 
         cx.methods.map! do |m|
           SExpr.new([
