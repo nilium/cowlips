@@ -27,12 +27,17 @@ module Parser
     when :quote then quote(stream)
 
     when :regex then raise "Unsupported type"
-    when :name then stream.next.value.to_sym
-    when :true, :false then stream.next.to_bool
-    when :integer, :float, :hexnum, :binnum, :octnum then stream.next.to_num
+    when :name then stop_error("Expected name") {
+      stream.next.value.to_sym
+    }
+    when :true, :false then stop_error("Expected boolean literal") {
+      stream.next.to_bool
+    }
+    when :integer, :float, :hexnum, :binnum, :octnum
+      stop_error("Expected number literal") { stream.next.to_num }
 
     when :paren_open
-      start = stream.next
+      start = stop_error("Expected opening parenthesis token") { stream.next }
       expect start.kind == :paren_open, "Expected opening parenthesis"
       stop_error("Unterminated s-expr starting at [#{start.line}:#{start.column}]") {
         ex = SExpr.new
