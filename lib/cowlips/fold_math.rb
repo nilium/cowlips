@@ -19,6 +19,7 @@ module FoldMathOp
 
   MATH_UNARY_FUNCS = [
     :'bitwise-not',
+    :not,
     :-
   ]
 
@@ -28,9 +29,14 @@ module FoldMathOp
 
   def unary_op(expr)
     return nil unless expr.length == 2 && MATH_UNARY_FUNCS.include?(expr[0])
-    return nil unless IF_NUMBER[expr.last]
 
     sym = expr[0]
+
+    if sym == :not && !(expr[1].kind_of?(Symbol) || expr[1].kind_of?(Expr))
+      return !expr[1]
+    end
+
+    return nil unless IF_NUMBER[expr.last]
 
     case sym
     when :- then -expr.last
