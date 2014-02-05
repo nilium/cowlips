@@ -82,7 +82,13 @@ module FoldMathOp
           return false if k == false
         end
 
-        new_expr = SExpr.new(expr.inner.reject { |k| k == true })
+        operands = expr.inner.reject { |k| k == true }
+        false_idx = operands.find_index(false)
+        if false_idx
+          info "Folding out unreachable expressions in (and ...)"
+          operands = operands[0..false_idx]
+        end
+        new_expr = SExpr.new(operands)
 
         if new_expr.length == 2
           new_expr[1]
@@ -96,7 +102,13 @@ module FoldMathOp
           return k if k != false
         end
 
-        new_expr = SExpr.new(expr.inner.reject { |k| k == false })
+        operands = expr.inner.reject { |k| k == false }
+        true_idx = operands.find_index(true)
+        if true_idx
+          info "Folding out unreachable expressions in (or ...)"
+          operands = operands[0..true_idx]
+        end
+        new_expr = SExpr.new(operands)
 
         if new_expr.length == 2
           new_expr[1]
